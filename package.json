@@ -1,0 +1,11 @@
+{
+  "name": "tour-magica",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.1"
+  }
+}

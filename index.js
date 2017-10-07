@@ -12,14 +12,19 @@ var session = require('express-session');
 var app = express();
 var mongoose = require('mongoose');
 
+/**
+ * Required for setting up https server.
+**/
 var privateKey = fs.readFileSync('key.pem');
 var certificate = fs.readFileSync('cert.pem')
-
 var credentials = {
-    key: privateKey,
-    cert: certificate
+  key: privateKey,
+  cert: certificate
 };
 
+/**
+ * Set up the middlewares.
+**/
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
@@ -36,10 +41,10 @@ app.set('views', __dirname + '/public/views');
 // app.use(favicon(__dirname + '/public/images/favicon.ico'));
 
 app.use(express.static(__dirname + '/public'));
-// app.use('/', express.static(__dirname + '/public/views'));
 
-
-
+/**
+ * Connect to the monodb instance.
+**/
 mongoose.connect('mongodb://127.0.0.1:27017/mahroRajasthan', function(err) {
     if(err) {
         console.log("Failed to connect to database");
@@ -52,51 +57,68 @@ var User = require('./models/user');
 var Tour = require('./models/tour');
 var Location = require('./models/location');
 
+/**
+ * Home Route
+**/
 app.get('/', function(req, res) {
-    if(req.session.tourId) {
-        res.sendFile( app.get('views') + '/index.html');
+  if(req.session.tourId) {
+    res.sendFile( app.get('views') + '/index.html');
+  } else {
+    if(req.session.mobileNo) {
+    	if(req.session.verified) {
+	      res.redirect('/details');
+    	}
+    	else {
+    		res.redirect('/verify');
+    	}
     } else {
-        if(req.session.mobileNo) {
-            if(req.session.verified) {
-                res.redirect('/details');
-            } else {
-                res.redirect('/verify');
-            }
-        } else {
-            res.redirect('/login');
-        }
-    }
+      res.redirect('/login');
+	  }
+  }
 });
+
+/**
+ * Login Route
+**/
 app.get('/login', function(req, res) {
-    if(req.session.tourId) {
-        res.redirect('/');
+  if(req.session.tourId) {
+    res.redirect('/');
+  } else {
+    if(req.session.mobileNo) {
+    	if(req.session.verified) {
+	      res.redirect('/details');
+    	}
+    	else {
+				res.redirect('/verify');    		
+    	}
     } else {
-        if(req.session.mobileNo) {
-            // if(req.session.verified) {
-                res.redirect('/details');
-            // } else {
-            //     res.redirect('/verify');
-            // }
-        } else {
-            res.sendFile(app.get('views') + '/login.html');
-        }
+      res.sendFile(app.get('views') + '/login.html');
     }
+  }
 });
+
+/**
+ * Verify Route
+**/
 app.get('/verify', function(req, res) {
-    if(req.session.tourId) {
-        res.redirect('/');
-    } else {
-        if(req.session.mobileNo) {
-            if(req.session.verified) {
-                res.redirect('/details');
-            } else {
-                res.sendFile(app.get('views') + '/verify.html');
-            }
-        } else {
-            res.redirect('/login')
-        }
+  if(req.session.tourId) {
+    res.redirect('/');
+  } else {
+    if(req.session.mobileNo) {
+      if(req.session.verified) {
+        res.redirect('/details');
+      } else {
+        res.sendFile(app.get('views') + '/verify.html');
+      }
+	  } else {
+      res.redirect('/login')
     }
+  }
 });
+
+/**
+ * Details Route
+**/
 app.get('/details', function(req, res){
     if(req.session.tourId) {
         res.redirect('/');
@@ -113,37 +135,45 @@ app.get('/details', function(req, res){
     }
 });
 
+/**
+ * API Login Route. Works in the backend
+**/
 app.post('/api/login', function(req, res) {
-    var data = req.body.mobileNo;
-    var user = new User();
-    user.mobileNo = data;
-    user.save(function(err) {
-        if(err && err.code!=11000) {
-            console.log(err);
-            res.redirect('/login');
-        } else {
-            req.session.mobileNo = data;
-            res.redirect('/verify');
-        }
-    });
+  var data = req.body.mobileNo;
+  var user = new User();
+  user.mobileNo = data;
+  user.save(function(err) {
+    if(err && err.code!=11000) {
+      console.log(err);
+      res.redirect('/login');
+    } else {
+      req.session.mobileNo = data;
+      res.redirect('/verify');
+    }
+  });
 });
+
+/**
+ * API Verify Route. Works in the backend
+**/
 app.post('/api/verify', function(req, res) {
-    var data = req.body.otp;
-    User.findOne({mobileNo: req.session.mobileNo}, function(err, user) {
-        if(err) {
-            console.log(err);
-            res.redirect('/verify');
-        } else {
-            console.log(user);
-            if(user.otp==data) {
-                res.redirect('/details');
-                req.session.verified = true;
-            } else {
-                res.redirect('/verify');
-            }
-        }
-    });
+  var data = req.body.otp;
+  User.findOne({mobileNo: req.session.mobileNo}, function(err, user) {
+    if(err) {
+      console.log(err);
+      res.redirect('/verify');
+    } else {
+      console.log(user);
+      if(user.otp==data) {
+        res.redirect('/details');
+        req.session.verified = true;
+      } else {
+        res.redirect('/verify');
+      }
+    }
+  });
 });
+
 app.post('/api/details', function(req, res) {
     var data = req.body;
     var tour = new Tour();
@@ -163,7 +193,8 @@ app.post('/api/details', function(req, res) {
         req.session.tourId = tour._id;
     }
     res.redirect('/');
-})
+});
+
 app.get('/api/insertLocation', function(req, res) {
     var data = {
         lat: 26.78,
@@ -179,7 +210,8 @@ app.get('/api/insertLocation', function(req, res) {
             console.log("Location info added");
         }
     })
-})
+});
+
 app.get('/api/locationInfo', function(req, res) {
     var data = req.query;
     data.lat = parseFloat(data.lat);
@@ -212,7 +244,8 @@ app.get('/api/locationInfo', function(req, res) {
             }
         }
     })
-})
+});
+
 app.post('/api/updateTour', function(req, res) {
     var data = req.body;
     Tour.findById(req.session.tourId, function(err, tour) {
@@ -225,7 +258,7 @@ app.post('/api/updateTour', function(req, res) {
             }
         })
     })
-})
+});
 
 app.get('/addLocation', function(req, res){
    for (var i = 0; i < 10; i++) {
@@ -245,7 +278,6 @@ app.get('/addLocation', function(req, res){
        });
    }
    res.send("Hello world");
-
 });
 
 app.get('/api/addTour', function(req, res){
@@ -345,15 +377,7 @@ app.get('/api/getTour', function(req, res){
     });
 });
 
-var httpServer = http.createServer(app);
 var httpsServer = https.createServer(credentials, app);
-
-httpServer.listen('6000', function(err){
-    if(err)
-        console.log(err);
-    else
-        console.log("Connected to port 6000.");
-});
 
 httpsServer.listen('6443', function(err){
     if(err)

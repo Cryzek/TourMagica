@@ -3,7 +3,7 @@ $(document).ready(function() {
   current_location();
 
   $(".pop-up .close").on("click", closePopUp);
-  $(".start-tour").on("click", startTour);
+  // $(".start-tour").on("click", startTour);
 });
 
 var map, marker;
@@ -19,7 +19,7 @@ function initMap() {
 
   map = new google.maps.Map(map, {
     center: {lat: -34.397, lng: 150.644},
-    zoom: 13
+    zoom: 25
   });
 
   google.maps.event.addListener(map, 'click', function(event) {
@@ -134,7 +134,15 @@ function initInterval() {
 }
 
 function startTour() {
-  $.get("api/getTour", function(data, response) {
+  var startPoint;
+  if(curPos !== undefined) {
+    startPoint = curPos;
+  }
+  else {
+    alert("Something is wrong.");
+    return;
+  }
+  $.get("api/getTour", startPoint, function(data, response) {
     if(response == "success") {
       console.log(data);
       var flightPlanCoordinates = data;

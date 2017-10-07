@@ -28,27 +28,31 @@ function initMap() {
 }
 
 function placeMarker(location) {
-  if(check_marker==1)
+  if(check_marker == 1) {
     marker.setMap(null);
+  }
+
   marker = new google.maps.Marker({
     position: location, 
     map: map
   });
 
-  if(typeof location.lat ==="function")
+  if(typeof location.lat ==="function") {
     var dest = {
       lat : location.lat(),
       lng : location.lng(),
-    }
-  else
+    };
+  }
+  else {
     var dest = {
       lat : location.lat,
       lng : location.lng,
     }
+  }
   map.setCenter(dest);
 
   showPopUp(dest);
-  check_marker=1;
+  check_marker = 1;
 }
 
 function current_location() {
@@ -70,6 +74,9 @@ function current_location() {
     };
     curPos = source
     newPos = curPos;
+    $.post('/api/updateTour', curPos, function(data, response) {
+
+    });
     initInterval();
     placeMarker(source);
   }, function(error) {
@@ -105,45 +112,41 @@ function initInterval() {
   var locationInterval = window.setInterval(function() {
     var temp;
     navigator.geolocation.getCurrentPosition(function(position) {
-      source = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
+      var source = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
       };
       temp = source;
-        if( (Math.abs(temp.lat - curPos.lat) <= 0.000000000005) && (Math.abs(temp.lat - curPos.lat) <= 0.000000000005) ) 
-          return;
-        else {
-            newPos = temp;
-          curPos = newPos;
-          $.get("/api/locationInfo", temp, function(data, response) {
-            // if(response=='success') {
-              openPopUp(data.locationTag, data.info);
-            // }
-          })
-        }
-
+      if( (Math.abs(temp.lat - curPos.lat) <= 0.0000005) && (Math.abs(temp.lat - curPos.lat) <= 0.00000005) ) {
+        return;
+      }
+      else {
+        newPos = temp;
+        curPos = newPos;
+        placeMarker(newPos);
+        $.post("/api/updateTour", newPos,function(data, response) {});
+      }
     }, function(error) {
       if(error) 
         console.log("Fail");
     });
-
-  }, 5000);
+  }, 2000);
 }
 
 function startTour() {
-    $.get("api/getTour", function(data, response) {
-        if(response == "success") {
-            console.log(data);
-            var flightPlanCoordinates = data;
-            var flightPath = new google.maps.Polyline({
-              path: flightPlanCoordinates,
-              geodesic: true,
-              strokeColor: '#FF0000',
-              strokeOpacity: 1.0,
-              strokeWeight: 2
-            });
+  $.get("api/getTour", function(data, response) {
+    if(response == "success") {
+      console.log(data);
+      var flightPlanCoordinates = data;
+      var flightPath = new google.maps.Polyline({
+        path: flightPlanCoordinates,
+        geodesic: true,
+        strokeColor: '#FF0000',
+        strokeOpacity: 1.0,
+        strokeWeight: 2
+      });
 
-            flightPath.setMap(map);
-        }
-    });
+      flightPath.setMap(map);
+    }
+  });
 }

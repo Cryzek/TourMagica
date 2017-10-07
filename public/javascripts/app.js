@@ -110,15 +110,18 @@ function initInterval() {
           lng: position.coords.longitude
       };
       temp = source;
-        if( (Math.abs(temp.lat - curPos.lat) <= 0.5) && (Math.abs(temp.lat - curPos.lat) <= 0.5) ) 
+        if( (Math.abs(temp.lat - curPos.lat) <= 0.000000000005) && (Math.abs(temp.lat - curPos.lat) <= 0.000000000005) ) 
           return;
         else {
             newPos = temp;
           curPos = newPos;
-          $.post("/api/updateTour", curPos, function(data, response) {
-              console.log(response);
-          });
+          $.get("/api/locationInfo", temp, function(data, response) {
+            // if(response=='success') {
+              openPopUp(data.locationTag, data.info);
+            // }
+          })
         }
+
     }, function(error) {
       if(error) 
         console.log("Fail");

@@ -45,7 +45,7 @@ app.use(express.static(__dirname + '/public'));
 /**
  * Connect to the monodb instance.
 **/
-mongoose.connect('mongodb://127.0.0.1:27017/mahroRajasthan', function(err) {
+mongoose.connect('mongodb://127.0.0.1:27017/tourApp', function(err) {
     if(err) {
         console.log("Failed to connect to database");
     } else {
@@ -120,19 +120,19 @@ app.get('/verify', function(req, res) {
  * Details Route
 **/
 app.get('/details', function(req, res){
-    if(req.session.tourId) {
-        res.redirect('/');
+  if(req.session.tourId) {
+    res.redirect('/');
+  } else {
+    if(req.session.mobileNo) {
+      if(req.session.verified) {
+        res.redirect('/details');
+      } else {
+        res.sendFile( app.get('views') + '/details.html');
+      }
     } else {
-        if(req.session.mobileNo) {
-            if(req.session.verified) {
-                res.redirect('/details');
-            } else {
-                res.sendFile( app.get('views') + '/details.html');
-            }
-        } else {
-            res.redirect('/login');
-        }
+      res.redirect('/login');
     }
+  }
 });
 
 /**
@@ -175,24 +175,24 @@ app.post('/api/verify', function(req, res) {
 });
 
 app.post('/api/details', function(req, res) {
-    var data = req.body;
-    var tour = new Tour();
-    if(data) {
-        if(data.gender) {
-            tour.gender = data.gender;
-        }
-        if(data.age) {
-            tour.age = data.age;
-        }
-        tour.save(function(err) {
-            if(err) {
-                console.log(err);
-                res.redirect('/details');
-            }
-        })
-        req.session.tourId = tour._id;
+  var data = req.body;
+  var tour = new Tour();
+  if(data) {
+    if(data.gender) {
+      tour.gender = data.gender;
     }
-    res.redirect('/');
+    if(data.age) {
+      tour.age = data.age;
+    }
+    tour.save(function(err) {
+      if(err) {
+        console.log(err);
+        res.redirect('/details');
+      }
+    })
+    req.session.tourId = tour._id;
+  }
+  res.redirect('/');
 });
 
 app.get('/api/insertLocation', function(req, res) {
@@ -213,71 +213,74 @@ app.get('/api/insertLocation', function(req, res) {
 });
 
 app.get('/api/locationInfo', function(req, res) {
-    var data = req.query;
-    data.lat = parseFloat(data.lat);
-    data.lng = parseFloat(data.lng);
-    console.log(data);
-    Location.find({
-        lat: {$gt: data.lat-0.005, $lt:data.lat+0.005}
-    }, function(err, location) {
-        console.log(location);
-        if(err) {
-            res.send("Unknown location", "Unknown Info");
-        } else {
-            if(location && location[0]) {
-                res.send({locationTag: location[0].locationTag, info: location[0].info});
-            } else {
-                Location.find({
-                    lng: {$gt: data.lng-0.005, $lt:data.lng+0.005}
-                }, function(err, location) {
-                    console.log(location);
-                    if(err) {
-                        res.send("Unknown location", "Unknown Info");
-                    } else {
-                        if(location && location[0]) {
-                            res.send({locationTag: location[0].locationTag, info: location[0].info});
-                        } else {
-                            res.send({locationTag: "Unknown location", info: "Unknown Info"});
-                        }
-                    }
-                })
-            }
-        }
-    })
-});
-
-app.post('/api/updateTour', function(req, res) {
-    var data = req.body;
-    Tour.findById(req.session.tourId, function(err, tour) {
-        tour.push(data);
-        tour.save(function(err) {
-            if(err) {
-                console.log(err);
-            } else {
-                res.redirect('/');
-            }
-        })
-    })
+  var data = req.query;
+  data.lat = parseFloat(data.lat);
+  data.lng = parseFloat(data.lng);
+  // console.log(data);
+  Location.find({
+    lat: {$gt: data.lat-0.005, $lt:data.lat+0.005}
+  }, function(err, location) {
+      // console.log(location);
+      if(err) {
+          res.send("Unknown location", "Unknown Info");
+      } else {
+          if(location && location[0]) {
+              res.send({locationTag: location[0].locationTag, info: location[0].info});
+          } else {
+              Location.find({
+                  lng: {$gt: data.lng-0.005, $lt:data.lng+0.005}
+              }, function(err, location) {
+                  // console.log(location);
+                  if(err) {
+                      res.send("Unknown location", "Unknown Info");
+                  } else {
+                      if(location && location[0]) {
+                          res.send({locationTag: location[0].locationTag, info: location[0].info});
+                      } else {
+                          res.send({locationTag: "Unknown location", info: "Unknown Info"});
+                      }
+                  }
+              })
+          }
+      }
+  })
 });
 
 app.get('/addLocation', function(req, res){
-   for (var i = 0; i < 10; i++) {
-       var location = new Location();
-       location.lat =  Math.random()*100;
-       location.lng = Math.random()*100;
-       location.info = "This place is know for wars. The battle of bastards was fought here.";
-       location.locationTag  = "River-run";
-       location.save(function(err){
-            if(err){
-                console.log(err);
-            }
-            else
-            {
-                console.log("Data added " + i);
-            }
-       });
-   }
+  for (var i = 0; i < 10; i++) {
+    var location = new Location();
+    location.lat =  Math.random()*100;
+    location.lng = Math.random()*100;
+    location.info = "This place is know for wars. The battle of bastards was fought here.";
+    location.locationTag  = "River-run";
+    location.save(function(err){
+      if(err){
+        console.log(err);
+      }
+      else {
+        console.log("Data added " + i);
+      }
+    });
+  }
    res.send("Hello world");
+});
+
+app.post('/api/updateTour', function(req, res) {
+  var data = req.body;
+  Tour.findById(req.session.tourId, function(err, tour) {
+    console.log("Data ");
+    console.log(data);
+    tour.path.push(data);
+    console.log("Path ");
+    console.log(tour.path);
+    tour.save(function(err) {
+      if(err) {
+        console.log(err);
+      } else {
+        res.redirect('/');
+      }
+    });
+  });
 });
 
 app.get('/api/addTour', function(req, res){
@@ -380,8 +383,8 @@ app.get('/api/getTour', function(req, res){
 var httpsServer = https.createServer(credentials, app);
 
 httpsServer.listen('6443', function(err){
-    if(err)
-        console.log(err);
-    else
-        console.log("Connected to port 6443.");
+  if(err)
+    console.log(err);
+  else
+    console.log("Connected to port 6443.");
 });

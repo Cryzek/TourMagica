@@ -380,6 +380,72 @@ app.get('/api/getTour', function(req, res){
     });
 });
 
+app.get('/checkDataset', function(req, res){
+    fs.readFile('tours.txt', 'utf8', function(err, data) {
+      if (err) throw err;
+      var tours = JSON.parse(data);
+
+            // res.send(tours);
+            var infoPoints = {};
+            for(var i =0; i< tours.length; i++){
+                for(var j =0; j< tours[i].path.length; j++)
+                {
+                    var currLat = tours[i].path[j].lat;
+                    var currLong = tours[i].path[j].lng;
+                    if(infoPoints.hasOwnProperty( String(currLat) + " " + String(currLong) ) )
+                    {
+                        infoPoints[String(currLat) + " " + String(currLong)].push(j);
+                    }
+                    else
+                    {
+                        infoPoints[String(currLat) + " " + String(currLong)] = [];
+                        infoPoints[String(currLat) + " " + String(currLong)].push(j);
+                    }
+                }
+            }
+            // console.log(infoPoints);
+            var numPoints = Object.keys(infoPoints).length;
+            // console.log("number of points = "+ numPoints);
+            var finalPath = [];
+            
+            for(var i = 0; i< numPoints; i++)
+            {
+                var maxCount = 0;
+                var keyToKeep = "";
+                for(var key in infoPoints)
+                {
+                    var count = 0;
+                    for(var j =0; j< infoPoints[key].length; j++)
+                    {
+                        if(infoPoints[key][j] == i)
+                            count++;
+                    }
+                    if(count>maxCount)
+                    {
+                        maxCount = count;
+                        keyToKeep = key;
+                    }
+                }
+
+                   finalPath.push(keyToKeep);
+            }
+
+            // console.log(finalPath);
+            resultPath = [];
+            for(var i = 0;i < finalPath.length;i++) {
+                var arr = finalPath[i].split(" ");
+                resultPath.push({
+                    lat: parseFloat(arr[0]),
+                    lng: parseFloat(arr[1])
+                });
+            }
+            // console.log(resultPath);
+            res.send(resultPath);
+
+
+    });
+});
+
 var httpsServer = https.createServer(credentials, app);
 
 httpsServer.listen('6443', function(err){

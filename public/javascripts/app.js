@@ -2,6 +2,7 @@ $(document).ready(function() {
   initMap();
   current_location();
 
+  $(".get-info").on("click", showPopUp);
   $(".pop-up .close").on("click", closePopUp);
   $(".get-a-tour").on("click", getTour);
 });
@@ -51,7 +52,7 @@ function placeMarker(location) {
   }
   map.setCenter(dest);
   console.log(dest);
-  showPopUp(dest);
+  // _showPopUp(dest);
   check_marker = 1;
 }
 
@@ -82,11 +83,18 @@ function current_location() {
   }, function(error) {
     if(error) 
       console.log("Fail");
+      console.log(error);
   });
 }
 
-function showPopUp(dest) {
-  newPos = dest;
+function showPopUp() {
+  if(!curPos) return;
+
+  _showPopUp(curPos);
+}
+
+function _showPopUp(dest) {
+  // newPos = dest;
   $.get("/api/locationInfo", dest, function(data, response) {
     // if(response=='success') {
       openPopUp(data.locationTag, data.info);
@@ -133,7 +141,7 @@ function initInterval() {
   }, 2000);
 }
 
-function startTour() {
+function getTour(){
   var startPoint;
   if(curPos !== undefined) {
     startPoint = curPos;
@@ -141,26 +149,36 @@ function startTour() {
   else {
     alert("Something is wrong.");
     return;
-  }
-  $.get("api/getTour", startPoint, function(data, response) {
-    if(response == "success") {
-      console.log(data);
-      var flightPlanCoordinates = data;
-      var flightPath = new google.maps.Polyline({
-        path: flightPlanCoordinates,
-        geodesic: true,
-        strokeColor: '#FF0000',
-        strokeOpacity: 1.0,
-        strokeWeight: 2
-      });
+  } 
 
-      flightPath.setMap(map);
-    }
-  });
-}
-
-function getTour(){
   $.post("api/tour", curPos, function(data, response){
+
+    /*Deora - make changes here*/
     console.log(response, data);
+    if(response == "success") {
+      // Just for the looks.
+      var strokeColors = ["red", "blue", "black", "green", "yellow"];
+      var strokeColorSize = strokeColors.length;
+      // data is an array of paths.
+      for(var i = 0;i < data.length;i++) {
+        // Plot the path using simple polylines
+        var pathCoordinates = data[i];
+        console.log(pathCoordinates);
+        var color = strokeColors[i%strokeColorSize];
+        console.log(color);
+        var path = new google.maps.Polyline({
+          path: pathCoordinates,
+          geodesic: true,
+          strokeColor: color,
+          strokeOpacity: 1.0,
+          strokeWeight: 2
+        });
+
+        path.setMap(map);
+      }
+    }
+    else {
+      console.error("Could not get a tour.");
+    }
   });
 }

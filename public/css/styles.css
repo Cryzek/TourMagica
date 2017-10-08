@@ -381,3 +381,14 @@ body {
 	font-size: 14px;
 	z-index: 5;
 }
+
+.get-info {
+	position: absolute;
+	left: 140px;
+	bottom: 100px;
+	padding: 0vh 3vw !important;
+	background-color: white;
+	color: #615d8c;
+	font-size: 14px;
+	z-index: 5;
+}

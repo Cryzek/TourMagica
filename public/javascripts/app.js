@@ -3,7 +3,7 @@ $(document).ready(function() {
   current_location();
 
   $(".pop-up .close").on("click", closePopUp);
-  // $(".start-tour").on("click", startTour);
+  $(".get-a-tour").on("click", getTour);
 });
 
 var map, marker;
@@ -50,7 +50,7 @@ function placeMarker(location) {
     }
   }
   map.setCenter(dest);
-
+  console.log(dest);
   showPopUp(dest);
   check_marker = 1;
 }
@@ -77,7 +77,7 @@ function current_location() {
     $.post('/api/updateTour', curPos, function(data, response) {
 
     });
-    initInterval();
+    // initInterval();
     placeMarker(source);
   }, function(error) {
     if(error) 
@@ -156,5 +156,11 @@ function startTour() {
 
       flightPath.setMap(map);
     }
+  });
+}
+
+function getTour(){
+  $.post("api/tour", curPos, function(data, response){
+    console.log(response, data);
   });
 }

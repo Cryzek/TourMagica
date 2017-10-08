@@ -446,6 +446,16 @@ app.get('/checkDataset', function(req, res){
     });
 });
 
+app.post('/api/tour', function(req, res){
+  console.log(req.body.data);
+  // res.send("we will give final tour based on geolocation: " + JSON.stringify(req.body));
+  var demoResult = [ { "lat": 12.920497899999999  , "lng": 77.68515250000001 },
+                        { "lat":  12.92047908001919, "lng": 77.6851536333561},
+                        { "lat":  12.920472544271435, "lng": 77.68517844378948},
+                        { "lat":  12.920449015578107, "lng": 77.68517944961786}];
+  res.send(demoResult);
+});
+
 var httpsServer = https.createServer(credentials, app);
 
 httpsServer.listen('6443', function(err){
